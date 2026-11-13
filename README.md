@@ -29,8 +29,40 @@ Site interne de suivi pour l'équipe Unilumin Tunisia Africa Office. Il remplace
 5. Ouvrir le site, entrer le code, créer votre compte admin.
 6. Si Windows demande l'accès au réseau (pare-feu) : cocher **Réseaux privés** et autoriser.
 
-**La fenêtre noire doit rester ouverte** (le PC du bureau est le serveur). Pour le démarrer tout seul avec Windows :
-Planificateur de tâches → Créer une tâche → Déclencheur « Au démarrage » → Action « Démarrer un programme » → `demarrer.bat`.
+**Démarrage automatique (recommandé)** : clic droit sur **`installer-demarrage-auto.bat`** → *Exécuter en tant
+qu'administrateur*. Le site tourne alors en arrière-plan, redémarre avec Windows (même sans ouvrir de session) et le PC
+ne se met plus en veille. Le code d'installation et le journal sont dans `data\serveur.log`.
+
+Conseil : extraire le site dans un dossier **sans espace** dans le chemin, par exemple `C:\UniluminOffice`.
+
+## 🌍 Accès depuis partout (events, maison, 4G)
+
+Le PC du bureau reste le serveur ; **Tailscale Funnel** (gratuit) lui donne une adresse publique sécurisée
+`https://…ts.net`, sans acheter de nom de domaine ni toucher à la box Internet. Les collègues n'installent rien :
+ils ouvrent simplement le lien sur leur téléphone ou leur PC.
+
+1. Créer un compte gratuit sur <https://tailscale.com> (avec un compte Google, par exemple).
+2. Installer **Tailscale sur le PC du bureau uniquement** et se connecter.
+3. Dans la console Tailscale (<https://login.tailscale.com/admin>) :
+   - **Machines** → renommer le PC du bureau, par exemple `unilumin-office` (ce nom apparaît dans l'adresse) ;
+   - **DNS** → activer **MagicDNS** et **HTTPS Certificates**.
+4. Sur le PC du bureau, ouvrir un terminal **en administrateur** et taper :
+
+   ```
+   tailscale funnel --bg 3000
+   ```
+
+   La première fois, Tailscale affiche un lien pour autoriser Funnel : l'ouvrir et accepter.
+   La commande affiche l'adresse du site, par exemple `https://unilumin-office.tailXXXX.ts.net`.
+5. Donner cette adresse à l'équipe. Elle fonctionne partout, en `https://` (cadenas), et reste la même.
+
+Pour arrêter l'accès depuis Internet : `tailscale funnel reset` (le site reste utilisable au bureau).
+
+**Protection** : le site est alors visible sur Internet, mais rien n'est lisible sans compte. Les connexions passent en
+`https://`, les cookies sont sécurisés, et les essais de mot de passe sont limités (par compte et par adresse).
+Choisissez des mots de passe solides et désactivez dans « Équipe & comptes » le compte d'une personne qui quitte l'équipe.
+
+Si le PC du bureau est éteint ou si Internet est coupé au bureau, le site n'est plus joignable depuis l'extérieur.
 
 ## Importer le Google Sheet (une seule fois)
 
@@ -56,10 +88,8 @@ Télécharger le nouveau ZIP, remplacer les fichiers **sauf le dossier `data/`**
 
 ## Bon à savoir
 
-- Le site fonctionne sur le réseau du bureau (Wi-Fi / câble). Pour l'utiliser depuis l'extérieur (events, 4G),
-  il faudra ajouter un réseau privé sécurisé (par ex. Tailscale) — à faire dans une prochaine étape.
-- Sur le réseau du bureau, le site est en `http://` : les mots de passe passent en clair sur le Wi-Fi interne.
-  Utilisez un Wi-Fi protégé par mot de passe ; un passage en `https://` est possible plus tard.
+- Au bureau, l'adresse `http://192.168.x.x:3000` passe en clair sur le Wi-Fi interne : de préférence, utilisez
+  partout l'adresse `https://…ts.net` (elle marche aussi au bureau).
 - Copier le dossier `data/` sur une clé USB de temps en temps = sauvegarde hors du PC.
 
 ## Pour les développeurs

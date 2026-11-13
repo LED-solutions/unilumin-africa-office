@@ -13,7 +13,7 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 const PORT = +process.env.PORT || 3000;
 const app = express();
 app.disable('x-powered-by');
-app.set('trust proxy', 'loopback');
+app.set('trust proxy', 'loopback');   // Tailscale Funnel / Cloudflare Tunnel arrivent par ce PC lui-même
 
 /* ---------- En-têtes de sécurité ---------- */
 app.use((req, res, next) => {
@@ -22,6 +22,9 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'same-origin');
   res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (auth.isHttps(req)) res.setHeader('Strict-Transport-Security', 'max-age=15552000');
+  if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
   next();
 });
 app.use(express.json({ limit: '2mb' }));
@@ -42,7 +45,8 @@ app.get('/api/status', (req, res) => {
 app.post('/api/setup', (req, res) => {
   if (usersCount() > 0) return res.status(403).json({ error: 'Déjà installé.' });
   const { code, email, name, password } = req.body || {};
-  if (String(code || '').trim().toUpperCase() !== auth.SETUP_CODE) return res.status(403).json({ error: 'Code d\'installation incorrect (voir la fenêtre du serveur).' });
+  if (auth.tooManyAttempts(req.ip || '', '__setup')) return res.status(429).json({ error: 'Trop d\'essais.' });
+  if (String(code || '').trim().toUpperCase() !== auth.SETUP_CODE) { auth.noteFailure(req.ip || '', '__setup'); return res.status(403).json({ error: 'Code d\'installation incorrect (voir la fenêtre du serveur).' }); }
   const err = checkUserInput(email, name) || auth.passwordProblem(password);
   if (err) return res.status(400).json({ error: err });
   const id = db.prepare('INSERT INTO users(email, name, role, pass_hash) VALUES(?,?,?,?)').run(email.trim(), name.trim(), 'admin', auth.hashPassword(password)).lastInsertRowid;
@@ -52,14 +56,15 @@ app.post('/api/setup', (req, res) => {
 });
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body || {};
-  const key = (req.ip || '') + '|' + String(email || '').toLowerCase();
-  if (auth.tooManyAttempts(key)) return res.status(429).json({ error: 'Trop d\'essais. Réessayez dans 15 minutes.' });
+  const ip = req.ip || '';
+  if (auth.tooManyAttempts(ip, email)) return res.status(429).json({ error: 'Trop d\'essais. Réessayez plus tard (15 à 60 minutes).' });
   const u = db.prepare('SELECT * FROM users WHERE email = ? AND active = 1').get(String(email || '').trim());
-  if (!u || !auth.checkPassword(String(password || ''), u.pass_hash)) {
-    auth.noteFailure(key);
+  const okPw = auth.checkPassword(String(password || ''), u ? u.pass_hash : auth.DUMMY_HASH);
+  if (!u || !okPw) {
+    auth.noteFailure(ip, email);
     return res.status(401).json({ error: 'E-mail ou mot de passe incorrect.' });
   }
-  auth.clearFailures(key);
+  auth.clearFailures(ip, email);
   auth.createSession(res, req, u.id);
   res.json({ ok: true, user: publicUser(u) });
 });

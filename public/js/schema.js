@@ -1,7 +1,7 @@
 /* Unilumin Africa Office — définitions partagées (serveur + navigateur).
    Aucune donnée client ici : uniquement la structure, les états et les règles. */
 
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.1.0';
 
 export const FAMILIES = {
   'À faire':        { fr: 'À faire / pas commencé', en: 'To do / not started', bg: '#F1F5F9', fg: '#475569' },

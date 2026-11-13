@@ -35,8 +35,12 @@ export function destroySession(req, res) {
   if (t) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha(t));
   setCookie(res, req, '', 0);
 }
+/* Accès depuis Internet (https via Tailscale Funnel / Cloudflare) → cookie « Secure » ; réseau du bureau (http) → cookie normal */
+export function isHttps(req) {
+  return req.secure || req.headers['x-forwarded-proto'] === 'https' || /\.ts\.net$/i.test(String(req.headers.host || '').split(':')[0]);
+}
 function setCookie(res, req, value, maxAge) {
-  const secure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const secure = isHttps(req);
   res.setHeader('Set-Cookie', `${COOKIE}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure ? '; Secure' : ''}`);
 }
 function readCookie(req) {
@@ -58,15 +62,29 @@ export function currentUser(req) {
 }
 export function revokeUserSessions(userId) { db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId); }
 
-/* Limite des tentatives de connexion : 8 essais / 15 min par IP + e-mail */
+/* Limite des tentatives de connexion (le site est accessible depuis Internet) :
+   - 8 essais / 15 min par adresse IP + e-mail
+   - 15 essais / heure sur un même compte, toutes adresses confondues
+   - 40 essais / heure depuis une même adresse IP, tous comptes confondus */
 const attempts = new Map();
-export function tooManyAttempts(key) {
-  const now = Date.now(), list = (attempts.get(key) || []).filter(t => now - t < 15 * 60000);
-  attempts.set(key, list);
-  return list.length >= 8;
+const RULES = [['ipmail', 15 * 60000, 8], ['mail', 3600000, 15], ['ip', 3600000, 40]];
+function keysOf(ip, email) { const e = String(email || '').toLowerCase().trim(); return { ipmail: ip + '|' + e, mail: 'm|' + e, ip: 'i|' + ip }; }
+export function tooManyAttempts(ip, email) {
+  const now = Date.now(), k = keysOf(ip, email);
+  return RULES.some(([name, win, max]) => {
+    const list = (attempts.get(k[name]) || []).filter(t => now - t < win);
+    attempts.set(k[name], list);
+    return list.length >= max;
+  });
 }
-export function noteFailure(key) { (attempts.get(key) || attempts.set(key, []).get(key)).push(Date.now()); }
-export function clearFailures(key) { attempts.delete(key); }
+export function noteFailure(ip, email) {
+  const k = keysOf(ip, email);
+  for (const [name] of RULES) { if (!attempts.has(k[name])) attempts.set(k[name], []); attempts.get(k[name]).push(Date.now()); }
+}
+export function clearFailures(ip, email) { attempts.delete(keysOf(ip, email).ipmail); }
+setInterval(() => { const now = Date.now(); for (const [k, l] of attempts) if (!l.some(t => now - t < 3600000)) attempts.delete(k); }, 600000).unref();
 
 /* Code d'installation affiché dans la console au premier démarrage (création du compte admin) */
-export const SETUP_CODE = crypto.randomBytes(4).toString('hex').toUpperCase();
+export const SETUP_CODE = crypto.randomBytes(6).toString('hex').toUpperCase();
+/* Empreinte factice : un e-mail inconnu prend autant de temps qu'un mauvais mot de passe */
+export const DUMMY_HASH = hashPassword(crypto.randomBytes(12).toString('hex'));

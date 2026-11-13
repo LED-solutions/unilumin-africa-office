@@ -2,8 +2,11 @@
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-export const DATA_DIR = process.env.UAO_DATA || path.resolve(process.cwd(), 'data');
+/* Toujours le dossier data/ du site (même si le site est lancé au démarrage de Windows depuis un autre dossier) */
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+export const DATA_DIR = process.env.UAO_DATA || path.join(ROOT, 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 export const DB_PATH = path.join(DATA_DIR, 'app.db');
 

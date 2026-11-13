@@ -191,6 +191,7 @@ function trashView() {
 /* ---------- Versions ---------- */
 function versionsView() {
   const V = [
+    ['1.1.0', '13/11/2026', 'Seif', 'Accès depuis partout en https (Tailscale Funnel), cookies sécurisés, limite d\'essais par compte, démarrage automatique avec Windows.'],
     ['1.0.0', '13/11/2026', 'Seif', 'Première version du site : comptes et connexion, Projets, Events, Appels d\'offres, Export, SAV, Contacts siège, Agenda, Calendrier, Stock, Corbeille, historique, recherche.']
   ];
   return h('section', { class: 'page' }, h('header', { class: 'page-head' }, h('h1', {}, '📝 ' + t('versions'))),
