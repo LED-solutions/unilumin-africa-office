@@ -1,0 +1,9 @@
+# Les données de l'équipe ne vont JAMAIS sur GitHub
+data/
+*.db
+*.db-*
+*.xlsx
+*.csv
+seed*.json
+node_modules/
+.env

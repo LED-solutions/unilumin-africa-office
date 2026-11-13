@@ -1,0 +1,21 @@
+{
+  "name": "unilumin-africa-office",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unilumin Africa Office – suivi des projets, events, appels d'offres, export, SAV et stock",
+  "type": "module",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node --no-warnings server/index.js",
+    "admin": "node --no-warnings scripts/admin.js",
+    "import": "node --no-warnings scripts/import-sheet.js",
+    "test": "node --no-warnings --test test/*.test.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0"
+  }
+}
