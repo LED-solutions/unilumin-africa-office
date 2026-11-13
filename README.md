@@ -1,6 +1,28 @@
 # Unilumin Africa Office
 
-Site interne de suivi pour l'équipe Unilumin Tunisia Africa Office. Il remplace le Google Sheet « Suivi des dossiers » :
+**Site : https://led-solutions.github.io/unilumin-africa-office/**
+
+Site interne de suivi de l'équipe Unilumin Tunisia Africa Office (Projets, Events, Appels d'offres, Export, SAV,
+Contacts siège, Agenda, Calendrier, Stock). Connexion par nom d'utilisateur et mot de passe ; l'administrateur crée
+les comptes et choisit, pour chaque onglet, si la personne peut le voir ou le modifier.
+
+## 🔒 Données
+
+Le site (dossier `docs/`) est publié par GitHub Pages. Les données sont enregistrées dans la branche `data` de ce
+dépôt, **chiffrées dans le navigateur** (AES-256) avant l'envoi : sans compte et mot de passe, les fichiers sont
+illisibles, et les noms d'utilisateur n'y apparaissent pas en clair. Chaque personne ne reçoit que les clés des
+onglets qu'elle a le droit de voir.
+
+Premier démarrage : se connecter avec **admin / admin**, puis choisir un vrai mot de passe (10 caractères minimum)
+et coller un jeton GitHub (Fine-grained, dépôt `unilumin-africa-office`, *Contents : Read and write*).
+
+---
+
+## Version « PC du bureau » (optionnelle)
+
+Le reste de ce document décrit l'ancienne version qui tourne sur un PC du bureau (dossiers `server/`, `public/`).
+
+Elle remplace aussi le Google Sheet « Suivi des dossiers » :
 
 - 📺 Projets · 🎤 Events · 📄 Appels d'offres · ✈️ Export · 🔧 SAV · 📞 Contacts siège (avec transfert)
 - 🏠 Accueil avec système d'alerte, « À surveiller », « Cette semaine » et l'équipe
